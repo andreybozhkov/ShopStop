@@ -3,6 +3,9 @@ const path = require('path');
 const bodyParser = require('body-parser');
 
 module.exports = (app, config) => {
+    app.set('view engine', 'pug');
+    app.set('views', path.join(config.rootPath, 'views'));
+    
     // Configure middleware for parsing form data.
     app.use(bodyParser.urlencoded({extended: true}));
 
