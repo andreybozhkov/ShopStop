@@ -11,4 +11,6 @@ module.exports = (app) => {
 
     app.get('/category/add', handlers.category.addGet);
     app.post('/category/add', handlers.category.addPost);
+
+    app.get('/category/:category/products', handlers.category.productByCategory);
 }
