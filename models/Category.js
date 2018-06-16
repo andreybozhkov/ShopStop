@@ -6,7 +6,8 @@ let categorySchema = mongoose.Schema({
         required: true,
         unique: true
     },
-    products: [ { type: mongoose.Schema.Types.ObjectId, ref: 'Product'} ]
+    products: [ { type: mongoose.Schema.Types.ObjectId, ref: 'Product'} ],
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 });
 
 let Category = mongoose.model('Category', categorySchema);
