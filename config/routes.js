@@ -12,6 +12,9 @@ module.exports = (app) => {
     app.get('/product/edit/:id', handlers.product.editGet);
     app.post('/product/edit/:id', upload.single('image'), handlers.product.editPost);
 
+    app.get('/product/delete/:id', handlers.product.deleteGet);
+    app.post('/product/delete/:id', handlers.product.deletePost);
+
     app.get('/category/add', handlers.category.addGet);
     app.post('/category/add', handlers.category.addPost);
 

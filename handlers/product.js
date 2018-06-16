@@ -95,3 +95,45 @@ module.exports.editPost = (req, res) => {
         }
     });
 };
+
+module.exports.deleteGet = (req, res) => {
+    let id = req.params.id;
+    Product.findById(id).then(product => {
+        if (!product) {
+            res.sendStatus(404);
+            return;
+        }
+
+        res.render('product/delete', {product: product});
+    });
+}
+
+module.exports.deletePost = (req, res) => {
+    let id = req.params.id;
+    Product.findByIdAndRemove(id).then((product) => {
+        if (!product) {
+            res.redirect(
+                `/?error=${encodeURIComponent('Product was not found!')}`);
+            return;
+        }
+
+        Category.findById(product.category).then((category) => {
+            let index = category.products.indexOf(product._id);
+            
+            if (index >= 0) {
+                category.products.splice(index, 1);
+            }
+            category.save();
+            
+            fs.unlink(`.${product.image}`, (err) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+            });
+
+            res.redirect(
+                `/?success=${encodeURIComponent('Product was deleted sucessfully!')}`);
+        });
+    });
+}
