@@ -11,8 +11,12 @@ module.exports.addGet = (req, res) => {
 module.exports.addPost = (req, res) => {
     let productObj = req.body;
     productObj.image = '\\' + req.file.path;
+    productObj.creator = req.user._id;
 
     Product.create(productObj).then((product) => {
+        req.user.createdProducts.push(product._id);
+        req.user.save();
+
         Category.findById(product.category).then((category) => {
             category.products.push(product._id);
             category.save();
@@ -28,13 +32,19 @@ module.exports.editGet = (req, res) => {
             res.sendStatus(404);
             return;
         }
-        
-        Category.find().then((categories) => {
-            res.render('product/edit', {
-                product: product,
-                categories: categories
+
+        if (product.creator.equals(req.user._id) || req.user.roles.indexOf('Admin') >= 0) {
+            Category.find().then((categories) => {
+                res.render('product/edit', {
+                    product: product,
+                    categories: categories
+                });
             });
-        });
+        } else {
+            res.redirect(
+                `/?error=${encodeURIComponent('Only the creator can edit the product!')}`);
+            return;
+        }
     });
 };
 
@@ -49,49 +59,55 @@ module.exports.editPost = (req, res) => {
             return;
         }
 
-        product.name = editedProduct.name;
-        product.description = editedProduct.description;
-        product.price = editedProduct.price;
+        if (product.creator.equals(req.user._id) || req.user.roles.indexOf('Admin') >= 0) {
+            product.name = editedProduct.name;
+            product.description = editedProduct.description;
+            product.price = editedProduct.price;
 
-        if (req.file) {
-            let newFilePath = req.file.path;
-            let oldFilePath = product.image;
-            
-            fs.unlink(`.${oldFilePath}`, (err) => {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
-            });
-
-            product.image = '\\' + newFilePath;
-        }
-
-        if (product.category.toString() !== editedProduct.category) {
-            Category.findById(product.category).then((currentCategory) => {
-                Category.findById(editedProduct.category).then((nextCategory) => {
-                    let index = currentCategory.products.indexOf(product._id);
-                    if (index >= 0) {
-                        currentCategory.products.splice(index, 1);
+            if (req.file) {
+                let newFilePath = req.file.path;
+                let oldFilePath = product.image;
+                
+                fs.unlink(`.${oldFilePath}`, (err) => {
+                    if (err) {
+                        console.log(err);
+                        return;
                     }
-                    currentCategory.save();
+                });
 
-                    nextCategory.products.push(product._id);
-                    nextCategory.save();
+                product.image = '\\' + newFilePath;
+            }
 
-                    product.category = editedProduct.category;
+            if (product.category.toString() !== editedProduct.category) {
+                Category.findById(product.category).then((currentCategory) => {
+                    Category.findById(editedProduct.category).then((nextCategory) => {
+                        let index = currentCategory.products.indexOf(product._id);
+                        if (index >= 0) {
+                            currentCategory.products.splice(index, 1);
+                        }
+                        currentCategory.save();
 
-                    product.save().then(() => {
-                        res.redirect(
-                            `/?success=${encodeURIComponent('Product was edited sucessfully!')}`);
+                        nextCategory.products.push(product._id);
+                        nextCategory.save();
+
+                        product.category = editedProduct.category;
+
+                        product.save().then(() => {
+                            res.redirect(
+                                `/?success=${encodeURIComponent('Product was edited sucessfully!')}`);
+                        });
                     });
                 });
-            });
+            } else {
+                product.save().then(() => {
+                    res.redirect(
+                        `/?success=${encodeURIComponent('Product was edited sucessfully!')}`);
+                });
+            }
         } else {
-            product.save().then(() => {
-                res.redirect(
-                    `/?success=${encodeURIComponent('Product was edited sucessfully!')}`);
-            });
+            res.redirect(
+                `/?error=${encodeURIComponent('Only the creator can edit the product!')}`);
+            return;
         }
     });
 };
@@ -104,37 +120,54 @@ module.exports.deleteGet = (req, res) => {
             return;
         }
 
-        res.render('product/delete', {product: product});
+        if (product.creator.equals(req.user._id) || req.user.roles.indexOf('Admin') >= 0) {
+            res.render('product/delete', {product: product});
+        } else {
+            res.redirect(
+                `/?error=${encodeURIComponent('Only the creator can delete the product!')}`);
+            return;
+        }
     });
 }
 
 module.exports.deletePost = (req, res) => {
     let id = req.params.id;
-    Product.findByIdAndRemove(id).then((product) => {
+
+    Product.findById(id).then((product) => {
         if (!product) {
             res.redirect(
                 `/?error=${encodeURIComponent('Product was not found!')}`);
             return;
         }
 
-        Category.findById(product.category).then((category) => {
-            let index = category.products.indexOf(product._id);
-            
-            if (index >= 0) {
-                category.products.splice(index, 1);
-            }
-            category.save();
-            
-            fs.unlink(`.${product.image}`, (err) => {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
-            });
+        if (product.creator.equals(req.user._id) || req.user.roles.indexOf('Admin') >= 0) {
+            product.remove();
 
+            Category.findById(product.category).then((category) => {
+                let index = category.products.indexOf(product._id);
+                
+                if (index >= 0) {
+                    category.products.splice(index, 1);
+                }
+                category.save();
+                
+                fs.unlink(`.${product.image}`, (err) => {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+                });
+
+                res.redirect(
+                    `/?success=${encodeURIComponent('Product was deleted sucessfully!')}`);
+            });
+        } else {
             res.redirect(
-                `/?success=${encodeURIComponent('Product was deleted sucessfully!')}`);
-        });
+                `/?error=${encodeURIComponent('Only the creator can delete the product!')}`);
+            return;
+        }
+
+        
     });
 }
 

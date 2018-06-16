@@ -37,7 +37,7 @@ let userSchema = mongoose.Schema({
         }
     },
     roles: [{ type: mongoose.Schema.Types.String }],
-    boughProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    boughtProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     createdProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     createdCategories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }]
 });

@@ -6,7 +6,11 @@ module.exports.addGet = (req, res) => {
 
 module.exports.addPost = (req, res) => {
     let category = req.body;
-    Category.create(category).then(() => {
+    category.creator = req.user._id;
+
+    Category.create(category).then((newCategory) => {
+        req.user.createdCategories.push(newCategory._id);
+        req.user.save();
         res.redirect('/');
     });
 }
