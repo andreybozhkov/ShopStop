@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
+const fs = require('fs');
 
 module.exports.addGet = (req, res) => {
     Category.find().then((categories) => {
@@ -53,7 +54,18 @@ module.exports.editPost = (req, res) => {
         product.price = editedProduct.price;
 
         if (req.file) {
-            product.image = '\\' + req.file.path;
+            let newFilePath = req.file.path;
+            let oldFilePath = product.image;
+            console.log(oldFilePath);
+            
+            fs.unlink(`.${oldFilePath}`, (err) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+            });
+
+            product.image = '\\' + newFilePath;
         }
 
         if (product.category.toString() !== editedProduct.category) {
