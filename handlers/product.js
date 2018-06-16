@@ -56,7 +56,6 @@ module.exports.editPost = (req, res) => {
         if (req.file) {
             let newFilePath = req.file.path;
             let oldFilePath = product.image;
-            console.log(oldFilePath);
             
             fs.unlink(`.${oldFilePath}`, (err) => {
                 if (err) {
