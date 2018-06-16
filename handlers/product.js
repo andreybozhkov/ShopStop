@@ -137,3 +137,11 @@ module.exports.deletePost = (req, res) => {
         });
     });
 }
+
+module.exports.buyGet = (req, res) => {
+    let id = req.params.id;
+
+    Product.findById(id).then((product) => {
+        res.render('product/buy', {product: product});
+    });
+}
